@@ -1,0 +1,84 @@
+/* Réinitialisation des marges et du padding par défaut */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Style général du body */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+}
+
+/* Style du titre principal */
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    color: #4CAF50;
+}
+
+/* Style du tableau */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+/* Style des en-têtes de colonne */
+th {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    text-align: left;
+}
+
+/* Style des cellules */
+td {
+    background-color: #fff;
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Style des lignes impaires du tableau */
+tr:nth-child(odd) td {
+    background-color: #f9f9f9;
+}
+
+/* Style des lignes survolées */
+tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Bordure autour du tableau */
+table, th, td {
+    border: 1px solid #ddd;
+}
+nav {
+    background-color: #333;
+    height: 50px;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 20px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+}
+
+nav ul li a:hover {
+    text-decoration: underline;
+}

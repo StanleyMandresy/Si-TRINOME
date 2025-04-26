@@ -1,0 +1,12 @@
+Nom de la page: accueil.php
+    -affichage:
+    liste des vehicule avec chauffeur par jour
+    -Fonction:
+    getAllVC
+    -integration:
+        connexion a la base mysql
+        
+    -base:
+    create table trajet , chauffeur, vehicule
+
+    
