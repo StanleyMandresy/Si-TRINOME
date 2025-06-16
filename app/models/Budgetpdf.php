@@ -1,4 +1,4 @@
-<?php
+?php
 require_once __DIR__.'/../../pdf/fpdf.php';
 class Budgetpdf extends FPDF {
     private $title;

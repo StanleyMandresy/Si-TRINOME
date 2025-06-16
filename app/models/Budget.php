@@ -18,7 +18,7 @@ class Budget {
         $sql = "SELECT b.*, 
                        d.nomDepartement, 
                        c.nomCategorie, 
-                       p.nom_periode 
+                       p.periode_id
                 FROM budget b
                 JOIN Departement d ON b.idDepartement = d.idDepartement
                 JOIN Categorie c ON b.idCategorie = c.idCategorie
@@ -35,7 +35,7 @@ class Budget {
         $sql = "SELECT b.*, 
                        d.nomDepartement, 
                        c.nomCategorie, 
-                       p.nom_periode 
+                       p.periode_id
                 FROM budget b
                 JOIN Departement d ON b.idDepartement = d.idDepartement
                 JOIN Categorie c ON b.idCategorie = c.idCategorie

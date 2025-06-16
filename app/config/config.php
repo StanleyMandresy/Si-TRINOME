@@ -72,7 +72,7 @@ return [
 	'database' => [
 		// uncomment the below 4 lines for mysql
 		 'host' => 'localhost:3306',
-		 'dbname' => 'SI',
+		 'dbname' => 'CRM',
 		 'user' => 'root',
 	 'password' => ''
 

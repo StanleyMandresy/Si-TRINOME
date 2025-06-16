@@ -5,7 +5,7 @@ namespace app\controllers;
 use app\models\Budget;
 use app\models\Departement;
 use app\models\Categorie;
-
+use app\models\CRMmodel;
 
 use Flight;
 
@@ -142,6 +142,12 @@ class BudgetController{
         $budgetModel = new Budget($db);
         $dept=new Departement(($db));
 
+        
+        $crmModel = new CRMModel($db); // On passe la connexion DB au modèle
+        
+        // Récupérer toutes les périodes
+        $periodes = $crmModel->getAllPeriodes();
+
 
         if ($dept->isFinance($_SESSION['idDepartement'])==false) {
         
@@ -150,7 +156,7 @@ class BudgetController{
                 $budgets = $budgetModel->getAllBudgets();
 
 
-                Flight::render('Validation',['budgets'=>$budgets]);  
+                Flight::render('Validation',['budgets'=>$budgets,'periodes'=>$periodes]);  
             }
 
             }
@@ -159,7 +165,9 @@ class BudgetController{
                 $budgetModel = new Budget($db);
                 $dept=new Departement(($db));
         
-        
+               
+                $crmModel = new CRMModel($db);
+
                 if (isset($_POST['valide']) && $dept->isFinance($_SESSION['idDepartement'])==false) {
                 
                         echo "Seul les membres du finance on accees";            
@@ -169,6 +177,10 @@ class BudgetController{
                          header('Location: validation');
                          exit;
                        
+                    }
+                    if(isset(($_POST['crmValide']))){
+               $crmModel->validerCRMPeriod($_POST['crmValide']);
+
                     }
         
                     }

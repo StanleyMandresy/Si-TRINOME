@@ -6,6 +6,11 @@ use app\controllers\CategorieController;
 use app\controllers\DepartementController;
 use app\controllers\UserController;
 use app\controllers\BudgetController;
+use app\controllers\StatController;
+use app\controllers\ClientController;
+use app\controllers\RetourController;
+use app\controllers\CRMcontroller;
+use app\controllers\VenteController;
 use flight\Engine;
 use flight\net\Router;
 //use Flight;
@@ -17,7 +22,33 @@ use flight\net\Router;
 /*$router->get('/', function() use ($app) {
 	$Welcome_Controller = new WelcomeController($app);
 	$app->render('welcome', [ 'message' => 'It works!!' ]);
+
 });*/
+
+$venteController = new VenteController();
+$router->get('/vente', [$venteController, 'showForm']); // pour afficher le formulaire
+$router->post('/vente', [$venteController, 'showForm']);   // pour traiter la soumission
+$router->post('/ventes/import', [$venteController, 'handleImport']);   // pour traiter la soumission
+
+
+$crmController = new CRMcontroller();
+Flight::route('GET /retours-clients', [$crmController, 'AfficherRetoursClients']);
+Flight::route('POST /associate-crm', [$crmController, 'associateCRM']);
+Flight::route('GET /list_crm', [$crmController, 'showCRMretour']);
+Flight::route('POST /valider-crm', [$crmController, 'validateCRM']);
+Flight::route('POST /save-prevision', [$crmController, 'savePrevision']);
+
+
+
+$RetourController = new RetourController();
+
+$router->get('/retour', [$RetourController, 'formulaireRetour']); // pour afficher le formulaire
+$router->post('/retour', [$RetourController, 'envoyerRetour']);   // pour traiter la soumission
+
+$ClientController=new ClientController();
+$router->post('/login', [$ClientController, 'accueil']);
+$router->get('/home', [ $ClientController, 'home' ]);
+
 
 $Welcome_Controller = new WelcomeController();
 $router->get('/welcome', [ $Welcome_Controller, 'home' ]);
@@ -77,8 +108,11 @@ $router->post('/csv',[$budget_controller,'csv']);
 $router->get('/exportpdf',[$budget_controller,'exportPDF']);
 
 
+$StatistiquesController = new StatController();
 
-
+// Définition de la route pour la page de statistiques
+$router->get('/statistiques', [ $StatistiquesController, 'home' ]);
+$router->post('/statistiques', [ $StatistiquesController, 'home' ]);
 
 
 
