@@ -80,19 +80,19 @@ INSERT INTO periodes (periode_id,nom_periode, mois) VALUES
 
 -- Table Budget
 CREATE TABLE budget(
-  idBudget INT PRIMARY KEY AUTO_INCREMENT,
-  idDepartement INT NOT NULL,
-  idCategorie INT NOT NULL,
-  Prevision DECIMAL(15,2) DEFAULT 0.00,
-  Realisation DECIMAL(15,2) DEFAULT 0.00,
-  Ecart DECIMAL(15,2) GENERATED ALWAYS AS (Realisation - Prevision) STORED,
-  DateBudget DATE NOT NULL DEFAULT CURRENT_DATE,
-  periode_id INT NOT NULL, -- Lier le budget à une période
- 
-  isApproved BOOLEAN NOT NULL DEFAULT FALSE,  -- Valeur par défaut FALSE pour approbation
-  FOREIGN KEY (idDepartement) REFERENCES Departement(idDepartement),
-  FOREIGN KEY (idCategorie) REFERENCES Categorie(idCategorie),
-  FOREIGN KEY (periode_id) REFERENCES periodes(periode_id) -- Lier à la table des périodes
+    idBudget INT PRIMARY KEY AUTO_INCREMENT,
+    idDepartement INT NOT NULL,
+    idCategorie INT NOT NULL,
+    Prevision DECIMAL(15,2) DEFAULT 0.00,
+    Realisation DECIMAL(15,2) DEFAULT 0.00,
+    Ecart DECIMAL(15,2) GENERATED ALWAYS AS (Realisation - Prevision) STORED,
+    DateBudget DATE NOT NULL DEFAULT (CURRENT_DATE),
+    periode_id INT NOT NULL, -- Lier le budget à une période
+    
+    isApproved BOOLEAN NOT NULL DEFAULT FALSE,  -- Valeur par défaut FALSE pour approbation
+    FOREIGN KEY (idDepartement) REFERENCES Departement(idDepartement),
+    FOREIGN KEY (idCategorie) REFERENCES Categorie(idCategorie),
+    FOREIGN KEY (periode_id) REFERENCES periodes(periode_id) -- Lier à la table des périodes
 );
 
 
@@ -218,33 +218,15 @@ CREATE TABLE vente (
 
 
 
---------------------------Ticket--------------------------------
--- Table des types de demande
+
 CREATE TABLE Type_demande (
-    id_type SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY AUTO_INCREMENT,  -- Changed from id_type to id to match your original reference
     nom_type VARCHAR(50) NOT NULL UNIQUE
 );
--- Insertion des données types demandés
-INSERT INTO type_demande (nom_type) VALUES
-('Réparation'),
-('Réclamation'),
-('Assistance technique'),
-('Demande d information'),
-('Maintenance');
 
--- Table for client requests
-CREATE TABLE Requete_Client (
-    id SERIAL PRIMARY KEY,
-    idclient INT NOT NULL,
-    idproduit_concerne INT NOT NULL,
-    FOREIGN KEY (idclient) REFERENCES Client(idClient), -- Assuming a clients table exists
-    FOREIGN KEY (idproduit_concerne) REFERENCES produits(id) -- Assuming a produits table exists
-);
-
--- Table for tickets
 CREATE TABLE Ticket (
-    id_ticket SERIAL PRIMARY KEY,
-    id_client INT NOT NULL,
+    id_ticket INT PRIMARY KEY AUTO_INCREMENT,
+    id_client INT,
     idproduit_concerne INT NOT NULL,
     id_type_demande INT NOT NULL,
     priorite VARCHAR(10) CHECK (priorite IN ('insignifiant', 'basse', 'moyenne', 'haute')),
@@ -253,12 +235,29 @@ CREATE TABLE Ticket (
     statut INT DEFAULT 0 CHECK (statut IN (0, 1, 2, 3)), -- 0=Reçu, 1=En cours, 2=Traité, 3=Fermé
     id_agent_assigne INT,
     cout DECIMAL(10,2),
-    duree INTERVAL,
-    FOREIGN KEY (id_client) REFERENCES Client(idClient), -- Assuming a clients table exists
-    FOREIGN KEY (idproduit_concerne) REFERENCES produits(id), -- Assuming a produits table exists
-    FOREIGN KEY (id_type_demande) REFERENCES type_demande(id), -- Assuming a type_demande table exists
-    FOREIGN KEY (id_agent_assigne) REFERENCES User(id) -- Assuming an User table exists
+    duree TIME,
+    FOREIGN KEY (id_client) REFERENCES Client(idClient),
+    FOREIGN KEY (idproduit_concerne) REFERENCES produit(idProduit),
+    FOREIGN KEY (id_type_demande) REFERENCES Type_demande(id),
+    FOREIGN KEY (id_agent_assigne) REFERENCES User(idUser)
 );
+INSERT INTO type_demande (nom_type) VALUES
+('Réparation'),
+('Réclamation'),
+('Assistance technique'),
+('Demande d information'),
+('Maintenance');
+
+-- Table for client requests
+
+CREATE TABLE Requete_Client (
+    id SERIAL PRIMARY KEY,
+    idclient INT NOT NULL,
+    idproduit_concerne INT NOT NULL,
+    FOREIGN KEY (idclient) REFERENCES Client(idClient), -- Assuming a clients table exists
+    FOREIGN KEY (idproduit_concerne) REFERENCES produit(idProduit) -- Assuming a produits table exists
+);
+
 
 -- Table for chat messages
 CREATE TABLE Chat (
@@ -269,7 +268,7 @@ CREATE TABLE Chat (
     CommentaireAgent TEXT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (idclient) REFERENCES Client(idClient), -- Assuming a clients table exists
-    FOREIGN KEY (id_agent_assigne) REFERENCES User(id) -- Assuming an User table exists
+    FOREIGN KEY (id_agent_assigne) REFERENCES User(idUser) -- Assuming an User table exists
 );
 
  Table for evaluations
@@ -290,6 +289,6 @@ CREATE TABLE Mouvement_ticket (
     date_traitement TIMESTAMP,
     date_fermeture TIMESTAMP,
 
-    FOREIGN KEY (idticket) REFERENCES ticket(id_ticket),
+    FOREIGN KEY (idticket) REFERENCES ticket(id_ticket)
   
 );
