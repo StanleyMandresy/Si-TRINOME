@@ -220,37 +220,76 @@ CREATE TABLE vente (
 
 --------------------------Ticket--------------------------------
 -- Table des types de demande
-CREATE TABLE type_demande (
+CREATE TABLE Type_demande (
     id_type SERIAL PRIMARY KEY,
     nom_type VARCHAR(50) NOT NULL UNIQUE
 );
-
 -- Insertion des données types demandés
 INSERT INTO type_demande (nom_type) VALUES
 ('Réparation'),
 ('Réclamation'),
 ('Assistance technique'),
-('Demande d\'information'),
+('Demande d information'),
 ('Maintenance');
 
--- Table des tickets
-CREATE TABLE tickets (
-    id_ticket SERIAL PRIMARY KEY,                        -- Identifiant unique
-    id_client INT NOT NULL,                              -- Clé étrangère vers table clients
-    id_type_demande INT NOT NULL,                        -- Clé étrangère vers type_demande
-    sujet TEXT NOT NULL,                                
-    description TEXT,                                    -- Détail complet du problème
-    statut VARCHAR(20) DEFAULT 'Reçu',                  -- Statut : Reçu, En traitement, Traité, etc.
-    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Date création ticket
-    date_debut_traitement TIMESTAMP,                     -- Date début traitement
-    date_cloture TIMESTAMP,                              -- Date clôture ticket
-    assigne_a INT,                                       -- Clé étrangère vers table utilisateurs/agents
-    cout NUMERIC(10,2) DEFAULT 0.00,                     -- Coût estimé ou réel du ticket
+-- Table for client requests
+CREATE TABLE Requete_Client (
+    id SERIAL PRIMARY KEY,
+    idclient INT NOT NULL,
+    idproduit_concerne INT NOT NULL,
+    FOREIGN KEY (idclient) REFERENCES Client(idClient), -- Assuming a clients table exists
+    FOREIGN KEY (idproduit_concerne) REFERENCES produits(id) -- Assuming a produits table exists
+);
 
-    -- Contraintes d'intégrité référentielle
-    CONSTRAINT fk_type_demande FOREIGN KEY (id_type_demande) REFERENCES type_demande(id_type)
+-- Table for tickets
+CREATE TABLE Ticket (
+    id_ticket SERIAL PRIMARY KEY,
+    id_client INT NOT NULL,
+    idproduit_concerne INT NOT NULL,
+    id_type_demande INT NOT NULL,
+    priorite VARCHAR(10) CHECK (priorite IN ('insignifiant', 'basse', 'moyenne', 'haute')),
+    sujet TEXT NOT NULL,
+    description TEXT,
+    statut INT DEFAULT 0 CHECK (statut IN (0, 1, 2, 3)), -- 0=Reçu, 1=En cours, 2=Traité, 3=Fermé
+    id_agent_assigne INT,
+    cout DECIMAL(10,2),
+    duree INTERVAL,
+    FOREIGN KEY (id_client) REFERENCES Client(idClient), -- Assuming a clients table exists
+    FOREIGN KEY (idproduit_concerne) REFERENCES produits(id), -- Assuming a produits table exists
+    FOREIGN KEY (id_type_demande) REFERENCES type_demande(id), -- Assuming a type_demande table exists
+    FOREIGN KEY (id_agent_assigne) REFERENCES User(id) -- Assuming an User table exists
+);
+
+-- Table for chat messages
+CREATE TABLE Chat (
+    id SERIAL PRIMARY KEY,
+    idclient INT NOT NULL,
+    id_agent_assigne INT NOT NULL,
+    CommentaireClient TEXT,
+    CommentaireAgent TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (idclient) REFERENCES Client(idClient), -- Assuming a clients table exists
+    FOREIGN KEY (id_agent_assigne) REFERENCES User(id) -- Assuming an User table exists
+);
+
+ Table for evaluations
+CREATE TABLE Evaluation (
+
+    idticket INT NOT NULL,
+    note_evaluation INT CHECK (note_evaluation BETWEEN 1 AND 5), -- Assuming a 1-5 rating scale
+    commentaire TEXT,
+    FOREIGN KEY (idticket) REFERENCES ticket(id_ticket)
 );
 
 
+CREATE TABLE Mouvement_ticket (
+    id SERIAL PRIMARY KEY,
+    idticket INT NOT NULL,
+    date_reçu TIMESTAMP,
+    date_prise_en_charge TIMESTAMP,
+    date_traitement TIMESTAMP,
+    date_fermeture TIMESTAMP,
 
-
+    FOREIGN KEY (idticket) REFERENCES ticket(id_ticket),
+  
+);

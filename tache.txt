@@ -1,0 +1,41 @@
+/Creation ticket:
+                 etape1: insertion requete client (client se connecte et accede a un formulaire)
+                 etape2: classification1: (sujet,priorite,...)
+                 etape3:classification2:( assigner a un agent , cout , duree)
+
+/gestion ticket
+liste ticket plus filtre (coté admin)
+liste ticket coté client (izay anazy ihany hahafany manaraka hoe vita ve sa tsy)
+supprimer//modifier
+
+
+/chat
+chat entre agent et client durant le traitement
+historique de chat concernant un ticket specifique
+
+
+/evaluation
+evaluation note /5 etoiles + commentaire du client concernant un ticket déja traité
+
+/Back budget
+-prevision budget ticket sur une periode
+-insertion dans le budget a chaque ticket traité
+-validation au cas prevision insuffisant sinon execution
+
+
+/Back ticket
+-enregistre chaque mouvement du ticket recu jusqu'a la fermeture
+-gestion mouvement_ticket(datetime + status)
+-historique de status ticket
+
+/Statistique
+-Le produit le plus concernée par les ticket pour une periode
+-Le client avec le plus de ticket // l'agent ayant traité leplus de ticket
+-duree moyenne traitement
+-satisfaction globale des clients
+...
+
+
+**
+atokana mihitsy ny view(page) mikasika an'ilay ticket
+tsy voatery atao daholo fa izay important ihany aloha no tokony tena atao
