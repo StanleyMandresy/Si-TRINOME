@@ -48,6 +48,7 @@ CREATE TABLE Type (
 INSERT INTO Departement (NomDepartement) VALUES ('Finance');
 INSERT INTO Departement (NomDepartement) VALUES ('Technicien');
 INSERT INTO Departement (NomDepartement) VALUES ('Vente');
+INSERT INTO Departement (NomDepartement) VALUES ('Commercial');
 
 INSERT INTO Categorie (idDepartement, NomCategorie, idNature)
 VALUES
@@ -55,6 +56,7 @@ VALUES
 (2,'reparation moto',1),
 (2,'piece',2),
 (3,'vente',1);
+(4,'Ticket',2);
 
 
 
@@ -220,76 +222,82 @@ CREATE TABLE vente (
 
 --------------------------Ticket--------------------------------
 -- Table des types de demande
+-- TABLE DES TYPES DE DEMANDE
 CREATE TABLE Type_demande (
     id_type SERIAL PRIMARY KEY,
     nom_type VARCHAR(50) NOT NULL UNIQUE
 );
--- Insertion des données types demandés
-INSERT INTO type_demande (nom_type) VALUES
+
+-- INSERTIONS DES TYPES
+INSERT INTO Type_demande (nom_type) VALUES
 ('Réparation'),
 ('Réclamation'),
 ('Assistance technique'),
-('Demande d information'),
+('Demande information'),
 ('Maintenance');
 
--- Table for client requests
-CREATE TABLE Requete_Client (
+
+-- TABLE DES REQUÊTES CLIENTS
+CREATE TABLE Requete_client (
     id SERIAL PRIMARY KEY,
     idclient INT NOT NULL,
     idproduit_concerne INT NOT NULL,
-    FOREIGN KEY (idclient) REFERENCES Client(idClient), -- Assuming a clients table exists
-    FOREIGN KEY (idproduit_concerne) REFERENCES produits(id) -- Assuming a produits table exists
+    FOREIGN KEY (idclient) REFERENCES Client(idClient),
+    FOREIGN KEY (idproduit_concerne) REFERENCES Produit(idProduit)
 );
 
--- Table for tickets
+
+-- TABLE DES TICKETS
 CREATE TABLE Ticket (
     id_ticket SERIAL PRIMARY KEY,
     id_client INT NOT NULL,
     idproduit_concerne INT NOT NULL,
     id_type_demande INT NOT NULL,
-    priorite VARCHAR(10) CHECK (priorite IN ('insignifiant', 'basse', 'moyenne', 'haute')),
+    priorite VARCHAR(15) CHECK (priorite IN ('insignifiant', 'basse', 'moyenne', 'haute')),
     sujet TEXT NOT NULL,
     description TEXT,
-    statut INT DEFAULT 0 CHECK (statut IN (0, 1, 2, 3)), -- 0=Reçu, 1=En cours, 2=Traité, 3=Fermé
+    statut INT DEFAULT 0 CHECK (statut IN (0, 1, 2, 3)),  -- 0=Reçu, 1=En cours, 2=Traité, 3=Fermé
     id_agent_assigne INT,
-    cout DECIMAL(10,2),
-    duree INTERVAL,
-    FOREIGN KEY (id_client) REFERENCES Client(idClient), -- Assuming a clients table exists
-    FOREIGN KEY (idproduit_concerne) REFERENCES produits(id), -- Assuming a produits table exists
-    FOREIGN KEY (id_type_demande) REFERENCES type_demande(id), -- Assuming a type_demande table exists
-    FOREIGN KEY (id_agent_assigne) REFERENCES User(id) -- Assuming an User table exists
+    coutHoraire DECIMAL(10,2),
+    duree TIME,  -- ou INTERVAL selon le SGBD utilisé (MariaDB : TIME)
+    FOREIGN KEY (id_client) REFERENCES Client(idClient),
+    FOREIGN KEY (idproduit_concerne) REFERENCES Produit(idProduit),
+    FOREIGN KEY (id_type_demande) REFERENCES Type_demande(id_type),
+    FOREIGN KEY (id_agent_assigne) REFERENCES User(id)
 );
 
--- Table for chat messages
+
+-- TABLE DES MESSAGES DE CHAT
 CREATE TABLE Chat (
     id SERIAL PRIMARY KEY,
     idclient INT NOT NULL,
     id_agent_assigne INT NOT NULL,
-    CommentaireClient TEXT,
-    CommentaireAgent TEXT,
+    commentaire_client TEXT,
+    commentaire_agent TEXT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (idclient) REFERENCES Client(idClient), -- Assuming a clients table exists
-    FOREIGN KEY (id_agent_assigne) REFERENCES User(id) -- Assuming an User table exists
+    FOREIGN KEY (idclient) REFERENCES Client(idClient),
+    FOREIGN KEY (id_agent_assigne) REFERENCES user(id)
 );
 
- Table for evaluations
-CREATE TABLE Evaluation (
 
+-- TABLE D'ÉVALUATION DES TICKETS
+CREATE TABLE Evaluation (
     idticket INT NOT NULL,
-    note_evaluation INT CHECK (note_evaluation BETWEEN 1 AND 5), -- Assuming a 1-5 rating scale
+    note_evaluation INT CHECK (note_evaluation BETWEEN 1 AND 5),
     commentaire TEXT,
+    PRIMARY KEY (idticket),
     FOREIGN KEY (idticket) REFERENCES ticket(id_ticket)
 );
 
 
+-- TABLE MOUVEMENT DU TICKET (HISTORIQUE)
 CREATE TABLE Mouvement_ticket (
     id SERIAL PRIMARY KEY,
     idticket INT NOT NULL,
-    date_reçu TIMESTAMP,
+    date_recu TIMESTAMP,
     date_prise_en_charge TIMESTAMP,
     date_traitement TIMESTAMP,
     date_fermeture TIMESTAMP,
-
-    FOREIGN KEY (idticket) REFERENCES ticket(id_ticket),
-  
+    FOREIGN KEY (idticket) REFERENCES ticket(id_ticket)
 );
+

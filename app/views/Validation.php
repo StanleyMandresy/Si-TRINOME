@@ -159,6 +159,39 @@
             </div>
         <?php endif; ?>
     </div>
+      <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Ajouter une prévision Ticket</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="/save-Ticket" class="row g-3">
+            <div class="col-md-6">
+                <label for="periode_id" class="form-label">Période</label>
+                <select class="form-select" id="periode_id" name="periode_id" required>
+                    <option value="">Sélectionner...</option>
+                    <?php foreach ($periodes as $periode): ?>
+                        <option value="<?= $periode['periode_id'] ?>">
+                            <?= htmlspecialchars($periode['nom_periode'] ?? 'Période '.$periode['periode_id']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="montant" class="form-label">Montant (€)</label>
+                <input type="number" step="0.01" min="0" class="form-control" 
+                       id="montant" name="montant" required>
+            </div>
+            
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    Enregistrer
+                </button>
+            </div>
+        </form>
+        
+       
+    </div>
 </div>   
 
 </body>

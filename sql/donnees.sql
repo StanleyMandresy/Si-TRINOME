@@ -24,6 +24,9 @@ INSERT INTO CRM (NomCRM, cout, pourcentChiffreAffaire) VALUES
 ('Freshdesk', 150.00, 2.00),
 ('Salesforce', 1200.00, 5.00);
 
+------------Ticket----------
+
+
 
 
 
