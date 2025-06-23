@@ -82,21 +82,19 @@ INSERT INTO periodes (periode_id,nom_periode, mois) VALUES
 
 -- Table Budget
 CREATE TABLE budget(
-  idBudget INT PRIMARY KEY AUTO_INCREMENT,
-  idDepartement INT NOT NULL,
-  idCategorie INT NOT NULL,
-  Prevision DECIMAL(15,2) DEFAULT 0.00,
-  Realisation DECIMAL(15,2) DEFAULT 0.00,
-  Ecart DECIMAL(15,2) GENERATED ALWAYS AS (Realisation - Prevision) STORED,
-  DateBudget DATE NOT NULL DEFAULT CURRENT_DATE,
-  periode_id INT NOT NULL, -- Lier le budget à une période
- 
-  isApproved BOOLEAN NOT NULL DEFAULT FALSE,  -- Valeur par défaut FALSE pour approbation
-  FOREIGN KEY (idDepartement) REFERENCES Departement(idDepartement),
-  FOREIGN KEY (idCategorie) REFERENCES Categorie(idCategorie),
-  FOREIGN KEY (periode_id) REFERENCES periodes(periode_id) -- Lier à la table des périodes
+    idBudget INT PRIMARY KEY AUTO_INCREMENT,
+    idDepartement INT NOT NULL,
+    idCategorie INT NOT NULL,
+    Prevision DECIMAL(15,2) DEFAULT 0.00,
+    Realisation DECIMAL(15,2) DEFAULT 0.00,
+    Ecart DECIMAL(15,2) GENERATED ALWAYS AS (Realisation - Prevision) STORED,
+    DateBudget DATE NOT NULL DEFAULT (CURRENT_DATE), -- Fixed: Use (CURRENT_DATE) or CURRENT_DATE()
+    periode_id INT NOT NULL, -- Lier le budget à une période
+    isApproved BOOLEAN NOT NULL DEFAULT FALSE, -- Valeur par défaut FALSE pour approbation
+    FOREIGN KEY (idDepartement) REFERENCES Departement(idDepartement),
+    FOREIGN KEY (idCategorie) REFERENCES Categorie(idCategorie),
+    FOREIGN KEY (periode_id) REFERENCES periodes(periode_id) -- Lier à la table des périodes
 );
-
 
 
 
@@ -224,7 +222,7 @@ CREATE TABLE vente (
 -- Table des types de demande
 -- TABLE DES TYPES DE DEMANDE
 CREATE TABLE Type_demande (
-    id_type SERIAL PRIMARY KEY,
+    id_type INT PRIMARY KEY AUTO_INCREMENT,
     nom_type VARCHAR(50) NOT NULL UNIQUE
 );
 
@@ -239,7 +237,7 @@ INSERT INTO Type_demande (nom_type) VALUES
 
 -- TABLE DES REQUÊTES CLIENTS
 CREATE TABLE Requete_client (
-    id SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     idclient INT NOT NULL,
     idproduit_concerne INT NOT NULL,
     FOREIGN KEY (idclient) REFERENCES Client(idClient),
@@ -249,7 +247,7 @@ CREATE TABLE Requete_client (
 
 -- TABLE DES TICKETS
 CREATE TABLE Ticket (
-    id_ticket SERIAL PRIMARY KEY,
+    id_ticket INT PRIMARY KEY AUTO_INCREMENT,
     id_client INT NOT NULL,
     idproduit_concerne INT NOT NULL,
     id_type_demande INT NOT NULL,
@@ -263,7 +261,7 @@ CREATE TABLE Ticket (
     FOREIGN KEY (id_client) REFERENCES Client(idClient),
     FOREIGN KEY (idproduit_concerne) REFERENCES Produit(idProduit),
     FOREIGN KEY (id_type_demande) REFERENCES Type_demande(id_type),
-    FOREIGN KEY (id_agent_assigne) REFERENCES User(id)
+    FOREIGN KEY (id_agent_assigne) REFERENCES User(idUser)
 );
 
 
@@ -276,7 +274,7 @@ CREATE TABLE Chat (
     commentaire_agent TEXT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (idclient) REFERENCES Client(idClient),
-    FOREIGN KEY (id_agent_assigne) REFERENCES user(id)
+    FOREIGN KEY (id_agent_assigne) REFERENCES user(idUser)
 );
 
 
@@ -286,13 +284,13 @@ CREATE TABLE Evaluation (
     note_evaluation INT CHECK (note_evaluation BETWEEN 1 AND 5),
     commentaire TEXT,
     PRIMARY KEY (idticket),
-    FOREIGN KEY (idticket) REFERENCES ticket(id_ticket)
+    FOREIGN KEY (idticket) REFERENCES Ticket(id_ticket)
 );
 
 
 -- TABLE MOUVEMENT DU TICKET (HISTORIQUE)
 CREATE TABLE Mouvement_ticket (
-    id SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     idticket INT NOT NULL,
     date_recu TIMESTAMP,
     date_prise_en_charge TIMESTAMP,

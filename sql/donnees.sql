@@ -26,6 +26,8 @@ INSERT INTO CRM (NomCRM, cout, pourcentChiffreAffaire) VALUES
 
 ------------Ticket----------
 
+INSERT INTO User (Nom, Motdepasse, Genre, Position, IdDepartement) VALUES
+('Cindy', ' ', 'F', 'Chef', 1);
 
 
 
