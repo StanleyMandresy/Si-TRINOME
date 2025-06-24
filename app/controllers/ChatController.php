@@ -160,6 +160,7 @@ $messages = $this->chatModel->getTicketMessages($ticketId);
         }
 
         try {
+            $this->chatModel = new ChatModel(Flight::db());
             $updatedCount = $this->chatModel->markMessagesAsRead($ticketId, $userType);
             
             Flight::json([
