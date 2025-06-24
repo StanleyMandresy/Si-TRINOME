@@ -34,6 +34,28 @@
             padding: 20px;
             border-radius: 10px 10px 0 0;
             text-align: center;
+            position: relative;
+        }
+
+        .profile-switcher {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .profile-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .profile-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .chat-header h2 {
@@ -228,10 +250,13 @@
 
     <div class="chat-container">
         <div class="chat-header">
+            <div class="profile-switcher">
+                <button class="profile-btn" id="switchProfile">Passer en <?= $userType === 'client' ? 'Agent' : 'Client' ?></button>
+            </div>
             <h2>Support Chat</h2>
             <div class="chat-status">
                 Ticket #<?= htmlspecialchars($ticketId) ?> - 
-                <?= $userType === 'client' ? 'Client' : 'Agent' ?>
+                <span id="currentProfile"><?= $userType === 'client' ? 'Client' : 'Agent' ?></span>
                 <span id="unreadBadge" class="unread-badge" style="display: none;">0</span>
             </div>
         </div>
@@ -272,100 +297,112 @@
     </div>
 
     <script>
-        class ChatManager {
-            constructor() {
-                this.ticketId = <?= json_encode($ticketId) ?>;
-                this.userType = <?= json_encode($userType) ?>;
-                this.lastMessageId = this.getLastMessageId();
-                this.pollingInterval = null;
-                this.isTyping = false;
-                this.typingTimer = null;
-                
-                this.initializeElements();
-                this.bindEvents();
-                this.startPolling();
-                this.scrollToBottom();
-                this.markMessagesAsRead();
-            }
+    class ChatManager {
+        constructor() {
+            this.ticketId = <?= json_encode($ticketId) ?>;
+            this.userType = <?= json_encode($userType) ?>;
+            this.lastMessageId = this.getLastMessageId();
+            this.pollingInterval = null;
+            this.isTyping = false;
+            this.typingTimer = null;
+            
+            this.initializeElements();
+            this.bindEvents();
+            this.startPolling();
+            this.scrollToBottom();
+            this.markMessagesAsRead();
+        }
 
-            initializeElements() {
-                this.messageInput = document.getElementById('messageInput');
-                this.sendButton = document.getElementById('sendButton');
-                this.chatMessages = document.getElementById('chatMessages');
-                this.typingIndicator = document.getElementById('typingIndicator');
-                this.connectionStatus = document.getElementById('connectionStatus');
-                this.unreadBadge = document.getElementById('unreadBadge');
-            }
+        initializeElements() {
+            this.messageInput = document.getElementById('messageInput');
+            this.sendButton = document.getElementById('sendButton');
+            this.chatMessages = document.getElementById('chatMessages');
+            this.typingIndicator = document.getElementById('typingIndicator');
+            this.connectionStatus = document.getElementById('connectionStatus');
+            this.unreadBadge = document.getElementById('unreadBadge');
+            this.switchProfileBtn = document.getElementById('switchProfile');
+            this.currentProfileSpan = document.getElementById('currentProfile');
+        }
 
-            bindEvents() {
-                this.sendButton.addEventListener('click', () => this.sendMessage());
-                this.messageInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.sendMessage();
-                    }
-                });
-
-                this.messageInput.addEventListener('input', () => {
-                    this.handleTyping();
-                });
-
-                // Marquer comme lu quand la fenêtre est focalisée
-                window.addEventListener('focus', () => {
-                    this.markMessagesAsRead();
-                });
-            }
-
-            async sendMessage() {
-                const message = this.messageInput.value.trim();
-                if (!message) return;
-
-                this.sendButton.disabled = true;
-                this.messageInput.disabled = true;
-
-                try {
-                    const response = await fetch('/chat/send', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: new URLSearchParams({
-                            ticket_id: this.ticketId,
-                            message: message,
-                            user_type: this.userType
-                        })
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        this.messageInput.value = '';
-                        this.addMessageToChat(message, this.userType, result.timestamp);
-                        this.lastMessageId = result.message_id;
-                        this.scrollToBottom();
-                    } else {
-                        throw new Error(result.error || 'Erreur lors de l\'envoi');
-                    }
-                } catch (error) {
-                    console.error('Erreur:', error);
-                    this.showConnectionError();
-                } finally {
-                    this.sendButton.disabled = false;
-                    this.messageInput.disabled = false;
-                    this.messageInput.focus();
+        bindEvents() {
+            this.sendButton.addEventListener('click', () => this.sendMessage());
+            this.messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.sendMessage();
                 }
+            });
+
+            this.switchProfileBtn.addEventListener('click', () => this.switchProfile());
+
+            window.addEventListener('focus', () => {
+                this.markMessagesAsRead();
+            });
+        }
+
+        switchProfile() {
+            this.userType = this.userType === 'client' ? 'agent' : 'client';
+            this.currentProfileSpan.textContent = this.userType === 'client' ? 'Client' : 'Agent';
+            this.switchProfileBtn.textContent = `Passer en ${this.userType === 'client' ? 'Agent' : 'Client'}`;
+            
+            // Recharger les messages avec le nouveau profil
+            this.lastMessageId = 0;
+            this.chatMessages.innerHTML = '<div class="no-messages">Chargement des messages...</div>';
+            this.pollForNewMessages();
+        }
+
+        async sendMessage() {
+            const message = this.messageInput.value.trim();
+            if (!message) return;
+
+            this.sendButton.disabled = true;
+            this.messageInput.disabled = true;
+
+            try {
+                const response = await fetch('/chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        ticket_id: this.ticketId,
+                        message: message,
+                        user_type: this.userType
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    this.messageInput.value = '';
+                    // Ajouter le message localement pour un feedback immédiat
+                    this.addMessageToChat(message, this.userType, new Date().toISOString());
+                    this.scrollToBottom();
+                } else {
+                    throw new Error(result.error || 'Erreur lors de l\'envoi');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                this.showConnectionError();
+            } finally {
+                this.sendButton.disabled = false;
+                this.messageInput.disabled = false;
+                this.messageInput.focus();
             }
+        }
 
-            async pollForNewMessages() {
-                try {
-                    const response = await fetch(`/chat/messages?ticket_id=${this.ticketId}&last_message_id=${this.lastMessageId}`);
-                    const result = await response.json();
+        async pollForNewMessages() {
+            try {
+                const response = await fetch(`/chat/messages?ticket_id=${this.ticketId}&last_message_id=${this.lastMessageId}`);
+                const result = await response.json();
 
-                    if (result.success && result.messages.length > 0) {
+                if (result.success) {
+                    if (result.messages.length > 0) {
                         result.messages.forEach(message => {
                             const messageText = message.commentaire_client || message.commentaire_agent;
                             const messageType = message.commentaire_client ? 'client' : 'agent';
                             
-                            if (messageType !== this.userType) {
+                            const existingMsg = document.querySelector(`[data-message-id="${message.id}"]`);
+                            if (!existingMsg) {
                                 this.addMessageToChat(messageText, messageType, message.timestamp, message.id);
                                 this.updateUnreadCount();
                             }
@@ -375,147 +412,133 @@
                         
                         this.scrollToBottom();
                     }
-
-                    this.setConnectionStatus(true);
-                } catch (error) {
-                    console.error('Erreur de polling:', error);
-                    this.setConnectionStatus(false);
-                }
-            }
-
-            addMessageToChat(message, userType, timestamp, messageId = null) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${userType}`;
-                if (messageId) messageDiv.setAttribute('data-message-id', messageId);
-
-                const timeStr = new Date(timestamp).toLocaleTimeString('fr-FR', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-
-                messageDiv.innerHTML = `
-                    <div class="message-content">
-                        ${this.escapeHtml(message)}
-                        <div class="message-time">${timeStr}</div>
-                    </div>
-                `;
-
-                // Supprimer le message "Aucun message" s'il existe
-                const noMessages = this.chatMessages.querySelector('.no-messages');
-                if (noMessages) {
-                    noMessages.remove();
                 }
 
-                this.chatMessages.appendChild(messageDiv);
-            }
-
-            async markMessagesAsRead() {
-                try {
-                    await fetch('/chat/mark-read', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: new URLSearchParams({
-                            ticket_id: this.ticketId,
-                            user_type: this.userType
-                        })
-                    });
-                    
-                    this.updateUnreadCount();
-                } catch (error) {
-                    console.error('Erreur marquage lu:', error);
-                }
-            }
-
-            async updateUnreadCount() {
-                try {
-                    const response = await fetch(`/chat/unread-count?ticket_id=${this.ticketId}&user_type=${this.userType}`);
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        const count = result.unread_count;
-                        if (count > 0) {
-                            this.unreadBadge.textContent = count;
-                            this.unreadBadge.style.display = 'inline';
-                        } else {
-                            this.unreadBadge.style.display = 'none';
-                        }
-                    }
-                } catch (error) {
-                    console.error('Erreur comptage non lus:', error);
-                }
-            }
-
-            handleTyping() {
-                if (!this.isTyping) {
-                    this.isTyping = true;
-                    // Ici on pourrait envoyer un signal "typing" au serveur
-                }
-
-                clearTimeout(this.typingTimer);
-                this.typingTimer = setTimeout(() => {
-                    this.isTyping = false;
-                    // Ici on pourrait envoyer un signal "stop typing" au serveur
-                }, 1000);
-            }
-
-            startPolling() {
-                this.pollingInterval = setInterval(() => {
-                    this.pollForNewMessages();
-                }, 2000); // Poll toutes les 2 secondes
-            }
-
-            stopPolling() {
-                if (this.pollingInterval) {
-                    clearInterval(this.pollingInterval);
-                }
-            }
-
-            setConnectionStatus(isOnline) {
-                this.connectionStatus.textContent = isOnline ? 'En ligne' : 'Hors ligne';
-                this.connectionStatus.className = `connection-status ${isOnline ? 'online' : 'offline'}`;
-            }
-
-            showConnectionError() {
+                this.setConnectionStatus(true);
+            } catch (error) {
+                console.error('Erreur de polling:', error);
                 this.setConnectionStatus(false);
-                setTimeout(() => {
-                    this.setConnectionStatus(true);
-                }, 3000);
-            }
-
-            scrollToBottom() {
-                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
-            }
-
-            getLastMessageId() {
-                const messages = document.querySelectorAll('[data-message-id]');
-                let maxId = 0;
-                messages.forEach(msg => {
-                    const id = parseInt(msg.getAttribute('data-message-id'));
-                    if (id > maxId) maxId = id;
-                });
-                return maxId;
-            }
-
-            escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
             }
         }
 
-        // Initialiser le chat quand la page est chargée
-        document.addEventListener('DOMContentLoaded', () => {
-            window.chatManager = new ChatManager();
-        });
+        addMessageToChat(message, userType, timestamp, messageId = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${userType}`;
+            if (messageId) messageDiv.setAttribute('data-message-id', messageId);
 
-        // Nettoyer quand on quitte la page
-        window.addEventListener('beforeunload', () => {
-            if (window.chatManager) {
-                window.chatManager.stopPolling();
+            const timeStr = new Date(timestamp).toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    ${this.escapeHtml(message)}
+                    <div class="message-time">${timeStr}</div>
+                </div>
+            `;
+
+            const noMessages = this.chatMessages.querySelector('.no-messages');
+            if (noMessages) {
+                noMessages.remove();
             }
-        });
+
+            this.chatMessages.appendChild(messageDiv);
+        }
+
+        async markMessagesAsRead() {
+            try {
+                await fetch('/chat/mark-read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        ticket_id: this.ticketId,
+                        user_type: this.userType
+                    })
+                });
+                
+                this.updateUnreadCount();
+            } catch (error) {
+                console.error('Erreur marquage lu:', error);
+            }
+        }
+
+        async updateUnreadCount() {
+            try {
+                const response = await fetch(`/chat/unread-count?ticket_id=${this.ticketId}&user_type=${this.userType}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const count = result.unread_count;
+                    if (count > 0) {
+                        this.unreadBadge.textContent = count;
+                        this.unreadBadge.style.display = 'inline';
+                    } else {
+                        this.unreadBadge.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur comptage non lus:', error);
+            }
+        }
+
+        startPolling() {
+            this.pollingInterval = setInterval(() => {
+                this.pollForNewMessages();
+            }, 2000);
+        }
+
+        stopPolling() {
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
+            }
+        }
+
+        setConnectionStatus(isOnline) {
+            this.connectionStatus.textContent = isOnline ? 'En ligne' : 'Hors ligne';
+            this.connectionStatus.className = `connection-status ${isOnline ? 'online' : 'offline'}`;
+        }
+
+        showConnectionError() {
+            this.setConnectionStatus(false);
+            setTimeout(() => {
+                this.setConnectionStatus(true);
+            }, 3000);
+        }
+
+        scrollToBottom() {
+            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        }
+
+        getLastMessageId() {
+            const messages = document.querySelectorAll('[data-message-id]');
+            let maxId = 0;
+            messages.forEach(msg => {
+                const id = parseInt(msg.getAttribute('data-message-id'));
+                if (id > maxId) maxId = id;
+            });
+            return maxId;
+        }
+
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    }
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', () => {
+        window.chatManager = new ChatManager();
+    });
+
+    window.addEventListener('beforeunload', () => {
+        if (window.chatManager) {
+            window.chatManager.stopPolling();
+        }
+    });
     </script>
 </body>
 </html>

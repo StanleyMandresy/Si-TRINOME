@@ -6,30 +6,30 @@ use Exception;
 
 class ChatModel {
     private $db;
- public function __construct($db) {
+    
+    public function __construct($db) {
         $this->db = $db;
     }
  
-public function getClientInfo($clientId) {
-    $sql = "SELECT * FROM client WHERE idClient = :clientId";
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute([':clientId' => $clientId]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
-}
+    public function getClientInfo($clientId) {
+        $sql = "SELECT * FROM client WHERE idClient = :clientId";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':clientId' => $clientId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 
     public function getTicketWithClient($ticketId) {
-    $sql = "SELECT t.*, c.nom, c.prenom, c.email 
-            FROM Ticket t
-            JOIN client c ON t.id_client = c.idClient
-            WHERE t.id_ticket = :ticketId";
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute([':ticketId' => $ticketId]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
-}
-    // Envoyer un message du client
+        $sql = "SELECT t.*, c.nom, c.prenom, c.email 
+                FROM Ticket t
+                JOIN client c ON t.id_client = c.idClient
+                WHERE t.id_ticket = :ticketId";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':ticketId' => $ticketId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     public function sendClientMessage($ticketId, $clientId, $message) {
         try {
-            // Vérifier si le ticket existe et récupérer l'agent assigné
             $ticket = $this->getTicketInfo($ticketId);
             if (!$ticket) {
                 throw new Exception("Ticket non trouvé.");
@@ -40,28 +40,46 @@ public function getClientInfo($clientId) {
                 throw new Exception("Aucun agent assigné à ce ticket.");
             }
 
-            $sql = "INSERT INTO Chat 
-                    (idclient, id_agent_assigne, commentaire_client, id_ticket) 
-                    VALUES (:clientId, :agentId, :message, :ticketId)";
+            // Vérifier s'il y a un message de l'agent auquel répondre
+            $lastAgentMessage = $this->getLastAgentMessage($ticketId);
             
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([
-                ':clientId' => $clientId,
-                ':agentId' => $agentId,
-                ':message' => $message,
-                ':ticketId' => $ticketId
-            ]);
+            if ($lastAgentMessage && $lastAgentMessage['commentaire_agent'] !== null) {
+                // Répondre au message existant
+                $sql = "UPDATE Chat 
+                        SET commentaire_client = :message,
+                            timestamp = CURRENT_TIMESTAMP
+                        WHERE id = :messageId";
+                
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([
+                    ':message' => $message,
+                    ':messageId' => $lastAgentMessage['id']
+                ]);
+                
+                return $lastAgentMessage['id'];
+            } else {
+                // Nouveau message
+                $sql = "INSERT INTO Chat 
+                        (idclient, id_agent_assigne, commentaire_client, id_ticket) 
+                        VALUES (:clientId, :agentId, :message, :ticketId)";
+                
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([
+                    ':clientId' => $clientId,
+                    ':agentId' => $agentId,
+                    ':message' => $message,
+                    ':ticketId' => $ticketId
+                ]);
 
-            return $this->db->lastInsertId();
+                return $this->db->lastInsertId();
+            }
         } catch (Exception $e) {
             throw new Exception("Erreur lors de l'envoi du message: " . $e->getMessage());
         }
     }
 
-    // Envoyer un message de l'agent
     public function sendAgentMessage($ticketId, $agentId, $message) {
         try {
-            // Vérifier si le ticket existe et récupérer le client
             $ticket = $this->getTicketInfo($ticketId);
             if (!$ticket) {
                 throw new Exception("Ticket non trouvé.");
@@ -69,25 +87,44 @@ public function getClientInfo($clientId) {
 
             $clientId = $ticket['id_client'];
 
-            $sql = "INSERT INTO Chat 
-                    (idclient, id_agent_assigne, commentaire_agent, id_ticket) 
-                    VALUES (:clientId, :agentId, :message, :ticketId)";
+            // Vérifier s'il y a un message du client auquel répondre
+            $lastClientMessage = $this->getLastClientMessage($ticketId);
             
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([
-                ':clientId' => $clientId,
-                ':agentId' => $agentId,
-                ':message' => $message,
-                ':ticketId' => $ticketId
-            ]);
+            if ($lastClientMessage && $lastClientMessage['commentaire_client'] !== null) {
+                // Répondre au message existant
+                $sql = "UPDATE Chat 
+                        SET commentaire_agent = :message,
+                            timestamp = CURRENT_TIMESTAMP
+                        WHERE id = :messageId";
+                
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([
+                    ':message' => $message,
+                    ':messageId' => $lastClientMessage['id']
+                ]);
+                
+                return $lastClientMessage['id'];
+            } else {
+                // Nouveau message
+                $sql = "INSERT INTO Chat 
+                        (idclient, id_agent_assigne, commentaire_agent, id_ticket) 
+                        VALUES (:clientId, :agentId, :message, :ticketId)";
+                
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([
+                    ':clientId' => $clientId,
+                    ':agentId' => $agentId,
+                    ':message' => $message,
+                    ':ticketId' => $ticketId
+                ]);
 
-            return $this->db->lastInsertId();
+                return $this->db->lastInsertId();
+            }
         } catch (Exception $e) {
             throw new Exception("Erreur lors de l'envoi du message: " . $e->getMessage());
         }
     }
 
-    // Lister les messages d'un ticket
     public function getTicketMessages($ticketId) {
         $sql = "SELECT * FROM Chat 
                 WHERE id_ticket = :ticketId 
@@ -99,7 +136,6 @@ public function getClientInfo($clientId) {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Marquer les messages comme lus (pour l'agent ou le client)
     public function markMessagesAsRead($ticketId, $userType) {
         try {
             if ($userType === 'agent') {
@@ -121,7 +157,6 @@ public function getClientInfo($clientId) {
         }
     }
 
-    // Compter les messages non lus
     public function countUnreadMessages($ticketId, $userType) {
         try {
             if ($userType === 'agent') {
@@ -144,11 +179,36 @@ public function getClientInfo($clientId) {
         }
     }
 
-    // Récupérer les informations du ticket
     private function getTicketInfo($ticketId) {
         $sql = "SELECT * FROM Ticket WHERE id_ticket = :ticketId";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':ticketId' => $ticketId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    private function getLastAgentMessage($ticketId) {
+        $sql = "SELECT * FROM Chat 
+                WHERE id_ticket = :ticketId 
+                AND commentaire_agent IS NOT NULL
+                ORDER BY timestamp DESC 
+                LIMIT 1";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':ticketId' => $ticketId]);
+        
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    private function getLastClientMessage($ticketId) {
+        $sql = "SELECT * FROM Chat 
+                WHERE id_ticket = :ticketId 
+                AND commentaire_client IS NOT NULL
+                ORDER BY timestamp DESC 
+                LIMIT 1";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':ticketId' => $ticketId]);
+        
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }

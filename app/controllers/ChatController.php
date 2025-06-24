@@ -56,40 +56,40 @@ $messages = $this->chatModel->getTicketMessages($ticketId);
 
     
     public function sendMessage() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            Flight::json(['error' => 'Méthode non autorisée'], 405);
-            return;
-        }
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        Flight::json(['error' => 'Méthode non autorisée'], 405);
+        return;
+    }
 
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+    // Récupérer les données du formulaire
+    $ticketId = $_POST['ticket_id'] ?? null;
+    $message = $_POST['message'] ?? null;
+    $userType = $_POST['user_type'] ?? 'client';
 
-        $ticketId = $_POST['ticket_id'] ?? null;
-        $message = trim($_POST['message'] ?? '');
-        $userType = $_POST['user_type'] ?? 'client';
-
-        if (!$ticketId || empty($message)) {
-            Flight::json(['error' => 'Données manquantes'], 400);
-            return;
-        }
+    if (!$ticketId || !$message) {
+        Flight::json(['error' => 'Données manquantes'], 400);
+        return;
+    }
 
         try {
             $messageId = null;
 
             if ($userType === 'client') {
-                $clientId = $_SESSION['idClient'] ?? null;
+                $clientId = 1 /*$_SESSION['idClient'] */ ?? null;
                 if (!$clientId) {
                     Flight::json(['error' => 'Session client non trouvée'], 401);
                     return;
                 }
+                $this->chatModel = new ChatModel(Flight::db());
                 $messageId = $this->chatModel->sendClientMessage($ticketId, $clientId, $message);
             } else {
-                $agentId = $_SESSION['idAgent'] ?? null;
+                $agentId = 1 /*$_SESSION['id_agent'] */ ?? null;
                 if (!$agentId) {
                     Flight::json(['error' => 'Session agent non trouvée'], 401);
                     return;
                 }
+            $this->chatModel = new ChatModel(Flight::db());
+
                 $messageId = $this->chatModel->sendAgentMessage($ticketId, $agentId, $message);
             }
 

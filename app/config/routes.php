@@ -124,14 +124,15 @@ $chatController = new ChatController();
 $router->get('/chat', [$chatController, 'showChat']);
 
 // API endpoints pour le chat
-$router->post('/chat/send', [$chatController, 'sendMessage']);
-$router->get('/chat/messages', [$chatController, 'getMessages']);
+
 $router->post('/chat/mark-read', [$chatController, 'markAsRead']);
 $router->get('/chat/unread-count', [$chatController, 'getUnreadCount']);
 $router->get('/tickets', ['TicketController', 'showTicket']);
 $router->get('/process-ticket', ['TicketController', 'processTicket']);
 $router->get('/chat/show', ['ChatController', 'showChat']);
 //$router->get('/', \app\controllers\WelcomeController::class.'->home'); 
+$router->post('/chat/send', [$chatController, 'sendMessage']);
+$router->get('/chat/messages', [$chatController, 'getMessages']);
 
 $TicketController = new TicketController();
 $router->get('/ShowTicklet', [$TicketController, 'ShowTicklet']);
