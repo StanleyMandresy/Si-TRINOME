@@ -11,7 +11,11 @@ class Ticket{
     public function __construct($db) {
         $this->db = $db;
     }
-
+        public function getAllTicket() {
+            $sql = "SELECT * FROM Ticket ORDER BY id_ticket DESC";
+            $stmt = $this->db->query($sql);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
        public function getIdCRM() {
         $sql = "SELECT idCategorie FROM Categorie WHERE NomCategorie = 'Ticket' LIMIT 1";
         $stmt = $this->db->prepare($sql);
@@ -23,7 +27,8 @@ class Ticket{
             throw new Exception("Catégorie CRM non trouvée.");
         }
         }
-    
+
+      
         private function getTicketById($id) {
             $sql = "SELECT * FROM Ticket WHERE id_ticket = :id";
             $stmt = $this->db->prepare($sql);

@@ -151,13 +151,13 @@ class Statistiques {
 
 
     
-    public function getAllCA() {
-        $sql = "SELECT  periode_id, montant as chiffre_affaires FROM ChiffreAffaire group by periode_id ";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-       
-        
-    }   
+public function getAllCA() {
+    $sql = "SELECT periode_id, montant as chiffre_affaires 
+            FROM ChiffreAffaire 
+            GROUP BY periode_id, montant";
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}   
     
 }
