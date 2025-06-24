@@ -11,22 +11,21 @@ class ChatModel {
     }
  
 public function getClientInfo($clientId) {
-        $sql = "SELECT * FROM clients WHERE id_client = :clientId";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':clientId' => $clientId]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
+    $sql = "SELECT * FROM client WHERE idClient = :clientId";
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute([':clientId' => $clientId]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
 
-    // Récupérer les informations du ticket avec le client
     public function getTicketWithClient($ticketId) {
-        $sql = "SELECT t.*, c.nom, c.prenom, c.email 
-                FROM Ticket t
-                JOIN clients c ON t.id_client = c.id_client
-                WHERE t.id_ticket = :ticketId";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':ticketId' => $ticketId]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
+    $sql = "SELECT t.*, c.nom, c.prenom, c.email 
+            FROM Ticket t
+            JOIN client c ON t.id_client = c.idClient
+            WHERE t.id_ticket = :ticketId";
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute([':ticketId' => $ticketId]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
     // Envoyer un message du client
     public function sendClientMessage($ticketId, $clientId, $message) {
         try {

@@ -30,8 +30,8 @@ class ChatController {
         }
 
         try {
-            // Récupérer les messages du ticket
-            $messages = $this->chatModel->getTicketMessages($ticketId);
+            $this->chatModel = new ChatModel(Flight::db());
+$messages = $this->chatModel->getTicketMessages($ticketId);
             
             // Compter les messages non lus
             $unreadCount = $this->chatModel->countUnreadMessages($ticketId, $userType);
@@ -120,6 +120,9 @@ class ChatController {
         }
 
         try {
+
+
+            $this->chatModel = new ChatModel(Flight::db());
             $messages = $this->chatModel->getTicketMessages($ticketId);
             
             // Filtrer les nouveaux messages
@@ -185,6 +188,8 @@ class ChatController {
         }
 
         try {
+
+            $this->chatModel = new ChatModel(Flight::db());
             $unreadCount = $this->chatModel->countUnreadMessages($ticketId, $userType);
             
             Flight::json([
