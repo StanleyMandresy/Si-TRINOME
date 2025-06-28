@@ -11,6 +11,8 @@ use app\controllers\ClientController;
 use app\controllers\RetourController;
 use app\controllers\CRMcontroller;
 use app\controllers\VenteController;
+use app\controllers\TicketController;
+use app\controllers\ChatController;
 use flight\Engine;
 use flight\net\Router;
 //use Flight;
@@ -48,6 +50,9 @@ $router->post('/retour', [$RetourController, 'envoyerRetour']);   // pour traite
 $ClientController=new ClientController();
 $router->post('/login', [$ClientController, 'accueil']);
 $router->get('/home', [ $ClientController, 'home' ]);
+Flight::route('GET /Ticket', [$ClientController, 'mesRequetes']);
+Flight::route('GET /Ticket/faire-requete', [$ClientController, 'faireRequetePage']);
+Flight::route('POST /Ticket/save-requete', [$ClientController, 'insererRequete']);
 
 
 $Welcome_Controller = new WelcomeController();
@@ -114,9 +119,39 @@ $StatistiquesController = new StatController();
 $router->get('/statistiques', [ $StatistiquesController, 'home' ]);
 $router->post('/statistiques', [ $StatistiquesController, 'home' ]);
 
+$TicketController = new TicketController();
+
+Flight::route('POST /save-Ticket', [$TicketController, 'savePrevision']);
+Flight::route('GET /Ticket/liste-requete', [$TicketController, 'listeRequetesClient']);
+Flight::route('POST /Ticket/classifier-requete', [$TicketController, 'classifierRequete']);
+
+Flight::route('GET /Ticket/liste-Ticket', [$TicketController, 'listeTicketsNonAssignes']);
+Flight::route('POST /Ticket/assigner-ticket', [$TicketController, 'assignerTicket']);
+
+$router->get('/Ticket/tickets-assignes', [$TicketController, 'listeTicketsAssignes']);
+$router->post('/Ticket/traiter-ticket', [$TicketController, 'traiterTicket']);
 
 
+$router->get('/Ticket/evaluer-ticket', [$TicketController, 'FormEvaluation']);
+$router->post('/Ticket/evaluer-ticket', [$TicketController, 'soumettreEvaluation']);
+
+
+$chatController = new ChatController();
+
+// Interface de chat
+
+$router->get('/chat', [$chatController, 'showChat']);
+
+// API endpoints pour le chat
+
+$router->post('/chat/mark-read', [$chatController, 'markAsRead']);
+$router->get('/chat/unread-count', [$chatController, 'getUnreadCount']);
+$router->get('/tickets', ['TicketController', 'showTicket']);
+$router->get('/process-ticket', ['TicketController', 'processTicket']);
+$router->get('/chat/show', ['ChatController', 'showChat']);
 //$router->get('/', \app\controllers\WelcomeController::class.'->home'); 
+$router->post('/chat/send', [$chatController, 'sendMessage']);
+$router->get('/chat/messages', [$chatController, 'getMessages']);
 
 $router->get('/hello-world/@name', function($name) {
 	echo '<h1>Hello world! Oh hey '.$name.'!</h1>';

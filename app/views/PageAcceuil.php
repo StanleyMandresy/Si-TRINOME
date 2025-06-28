@@ -1,50 +1,80 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page de Gestion du Budget</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 50px;
-        }
-
-        .button-container {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        .button-container a {
-            text-decoration: none;
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px 25px;
-            font-size: 18px;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-
-        .button-container a:hover {
-            background-color: #45a049;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page de Gestion du Budget</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .bg-custom-light-yellow { background-color: #FFF085; }
+    .bg-custom-cheerful-orange { background-color: #FCB454; }
+    .bg-custom-bright-orange { background-color: #FF9B17; }
+    .bg-custom-reddish-orange { background-color: #F16767; }
+    
+    .text-custom-bright-orange { color: #FF9B17; }
+    .text-custom-reddish-orange { color: #F16767; }
+    .hover-bg-custom-reddish-orange:hover { background-color: #F16767; }
+  </style>
 </head>
-<body>
 
-    <h1>Bienvenue dans le système de gestion du Budget</h1>
-    <div class="button-container">
-        <!-- Lien vers la page Voir Budget -->
-        <a href="/budget">Voir Budget</a>
+<body class="font-sans">
+  <div class="flex min-h-screen">
+    
+    <!-- Sidebar -->
+    <?php include('Head.php'); ?>
 
-        <!-- Lien vers la page CRUD Budget -->
-        <a href="/budgetList">CRUD Budget</a>
+    <!-- Contenu principal -->
+    <div class="flex-1 bg-custom-light-yellow p-8">
+      
+      
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 mb-12 text-center leading-tight">
+        Cindy - Fitahiana - Stanley <span class="text-custom-bright-orange"></span>
+      </h1>
 
-        <!-- Lien vers la page Valider Budget -->
-        <a href="/validation">Valider Budget</a>
+      <div class="flex flex-col sm:flex-row justify-center items-center gap-6 w-full max-w-3xl mx-auto">
+        <!-- Carte 1 -->
+        <a href="/budget" 
+          class="flex flex-col items-center justify-center p-6 bg-custom-cheerful-orange text-white font-semibold text-lg rounded-xl shadow-lg 
+                transition duration-300 ease-in-out transform hover:scale-105 hover-bg-custom-reddish-orange w-full sm:w-auto flex-1 
+                min-h-[150px] text-center"
+          onclick="showBudgetInfo(event)">
+          <i class="fas fa-chart-line fa-3x mb-3 text-white"></i>
+          <span>Voir Budget</span>
+        </a>
+
+        <!-- Carte 2 -->
+        <a href="/budgetList" 
+          class="flex flex-col items-center justify-center p-6 bg-custom-cheerful-orange text-white font-semibold text-lg rounded-xl shadow-lg 
+                transition duration-300 ease-in-out transform hover:scale-105 hover-bg-custom-reddish-orange w-full sm:w-auto flex-1
+                min-h-[150px] text-center"
+          onclick="showCrudInfo(event)">
+          <i class="fas fa-cogs fa-3x mb-3 text-white"></i>
+          <span>Gérer le Budget (CRUD)</span>
+        </a>
+
+        <!-- Carte 3 -->
+        <a href="/validation" 
+          class="flex flex-col items-center justify-center p-6 bg-custom-cheerful-orange text-white font-semibold text-lg rounded-xl shadow-lg 
+                transition duration-300 ease-in-out transform hover:scale-105 hover-bg-custom-reddish-orange w-full sm:w-auto flex-1
+                min-h-[150px] text-center"
+          onclick="showValidationInfo(event)">
+          <i class="fas fa-check-circle fa-3x mb-3 text-white"></i>
+          <span>Valider Budget</span>
+        </a>
+
+        <a href="/Ticket/liste-requete" 
+          class="flex flex-col items-center justify-center p-6 bg-custom-cheerful-orange text-white font-semibold text-lg rounded-xl shadow-lg 
+                transition duration-300 ease-in-out transform hover:scale-105 hover-bg-custom-reddish-orange w-full sm:w-auto flex-1
+                min-h-[150px] text-center"
+          onclick="">
+          <i class="fas fa-check-circle fa-3x mb-3 text-white"></i>
+          <span>Ticket</span>
+        </a>
+      </div>
     </div>
-
+  </div>
 </body>
 </html>
+

@@ -12,7 +12,85 @@ class Ticket{
         $this->db = $db;
     }
 
-       public function getIdCRM() {
+   public function getTicketsByClient($idClient) {
+    $sql = "SELECT t.*, c.nom, c.prenom, p.nomProduit
+            FROM Ticket t
+            JOIN Client c ON c.idClient = t.id_client
+            JOIN Produit p ON p.idProduit = t.idproduit_concerne
+            WHERE t.id_client = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute([$idClient]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+
+   public function getTicketsAssignes($idAgent) {
+        $sql = "SELECT t.*, c.nom, c.prenom, p.nomProduit
+                FROM Ticket t
+                JOIN Client c ON c.idClient = t.id_client
+                JOIN Produit p ON p.idProduit = t.idproduit_concerne
+                WHERE t.id_agent_assigne = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$idAgent]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getTicketsNonAssignes() {
+        $sql = "SELECT t.*, c.nom, c.prenom, p.nomProduit
+                FROM Ticket t
+                JOIN Client c ON c.idClient = t.id_client
+                JOIN Produit p ON p.idProduit = t.idproduit_concerne
+                WHERE t.id_agent_assigne IS NULL";
+        return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function assignerTicket($idTicket, $idAgent, $duree, $coutHoraire) {
+        $sql = "UPDATE Ticket 
+                SET id_agent_assigne = ?, duree = ?, coutHoraire = ?, statut = 1
+                WHERE id_ticket = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$idAgent, $duree, $coutHoraire, $idTicket]);
+    }
+
+    public function marquerCommeTraite($idTicket) {
+        $sql = "UPDATE Ticket SET statut = 2 WHERE id_ticket = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$idTicket]);
+    }
+
+   public function creerTicketDepuisRequete($data) {
+    try {
+        $this->db->beginTransaction();
+
+        $sql = "INSERT INTO Ticket (
+                    id_client, idproduit_concerne, id_type_demande,
+                    priorite, id_requete_client, description, statut
+                ) VALUES (?, ?, ?, ?, ?, ?, 0)";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            $data['id_client'],
+            $data['idproduit_concerne'],
+            $data['id_type_demande'],
+            $data['priorite'],
+            $data['id_requete_client'],
+            $data['description']
+        ]);
+
+        // Mise à jour classified dans Requete_client
+        $sqlUpdate = "UPDATE Requete_client SET classified = TRUE WHERE id = ?";
+        $stmtUpdate = $this->db->prepare($sqlUpdate);
+        $stmtUpdate->execute([$data['id_requete_client']]);
+
+        $this->db->commit();
+
+        return true;
+    } catch (Exception $e) {
+        $this->db->rollBack();
+        throw $e;  // ou gérer l'erreur selon ton besoin
+    }
+}
+
+       public function getIdTicket() {
         $sql = "SELECT idCategorie FROM Categorie WHERE NomCategorie = 'Ticket' LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
@@ -82,7 +160,7 @@ class Ticket{
     public function GetPrevisionTicket($periode_id) {
         $idCategorie = $this->getIdTicket();
         
-        $sql = "SELECT Prevision
+        $sql = "SELECT Prevision,Realisation
                 FROM budget 
                 WHERE idCategorie = :idCategorie 
                 AND periode_id = :periode_id";
@@ -98,34 +176,44 @@ class Ticket{
         // Retourne un tableau avec des valeurs à 0 si aucun résultat
         return $result ?: [
             'Prevision' => 0,
+            'Realisation' => 0,
         
         ];
     }
+
     public function executerTicket($TicketId, $periode_id) {
         try {
-            // Get ticket information
+          
             $ticket = $this->getTicketById($TicketId);
             if (!$ticket) {
                 throw new Exception("Ticket non trouvé.");
             }
 
-            // Get budget prevision for the period
+            
             $budgetInfo = $this->GetPrevisionTicket($periode_id);
             $prevision = $budgetInfo['Prevision'] ?? 0;
+            $realisation =$budgetInfo['Realisation'] ?? 0;
 
-            // Calculate ticket cost (coutHoraire * duree)
-            // Note: You'll need to convert TIME to hours for calculation
+          
             $dureeHeures = $this->convertTimeToHours($ticket['duree']);
             $ticketCost = $ticket['coutHoraire'] * $dureeHeures;
 
-            // Check if cost exceeds prevision
-            $isApproved = ($ticketCost <= $prevision);
+        
+            $isApproved = ($realisation + $ticketCost <= $prevision);
+       
 
-            // Update or insert budget realization
+            if ($isApproved) {
+               
+                $updateTicketSql = "UPDATE Ticket SET statut = 2 WHERE id_ticket = :ticketId";
+                $stmt = $this->db->prepare($updateTicketSql);
+            
+                $stmt->execute([':ticketId' => $TicketId]);
+               
+            }
             $idCategorie = $this->getIdTicket();
-            $idDepartement = 4; // As per your structure
+            $idDepartement = 4; 
 
-            // Check if budget exists
+           
             $checkSql = "SELECT idBudget, Realisation FROM budget 
                         WHERE idCategorie = :idCategorie 
                         AND periode_id = :periode_id";
@@ -167,10 +255,7 @@ class Ticket{
             $stmt = $this->db->prepare($sql);
             $stmt->execute($params);
 
-            // Update ticket status to "En cours" (1)
-            $updateTicketSql = "UPDATE Ticket SET statut = 1 WHERE id_ticket = :ticketId";
-            $stmt = $this->db->prepare($updateTicketSql);
-            $stmt->execute([':ticketId' => $TicketId]);
+        
 
             // Add movement record with prise_en_charge date
             $movementSql = "INSERT INTO Mouvement_ticket 
@@ -197,6 +282,71 @@ class Ticket{
         
         return $hours + ($minutes / 60) + ($seconds / 3600);
     }
+
+    public function validerTicketPeriode($periode_id) {
+    try {
+ 
+        $stmt = $this->db->prepare("SELECT 1 FROM periodes WHERE periode_id = ?");
+        $stmt->execute([$periode_id]);
+        if (!$stmt->fetch()) {
+            throw new Exception("Période invalide");
+        }
+ 
+        var_dump($periode_id);
+
+        $sql = "UPDATE Ticket 
+                SET statut = 2 
+                WHERE id_ticket IN (
+                    SELECT t.id_ticket
+                    FROM Ticket t
+                    JOIN budget b ON b.periode_id = ?
+                    WHERE t.statut = 1
+                )";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$periode_id]);
+
+     
+        return $stmt->rowCount();
+
+    } catch (Exception $e) {
+        error_log("Erreur validation tickets période: " . $e->getMessage());
+        throw new Exception("Erreur lors de la validation des tickets");
+    }
+}
+public function ajouterEvaluation($idTicket, $note, $commentaire) {
+    try {
+        $this->db->beginTransaction();
+
+        // Insérer l'évaluation
+        $sqlEval = "INSERT INTO Evaluation (idticket, note_evaluation, commentaire)
+                    VALUES (:idticket, :note, :commentaire)";
+        $stmtEval = $this->db->prepare($sqlEval);
+        $stmtEval->execute([
+            ':idticket' => $idTicket,
+            ':note' => $note,
+            ':commentaire' => $commentaire
+        ]);
+
+        // Mettre à jour le statut du ticket à 3 (Fermé)
+        $sqlTicket = "UPDATE Ticket SET statut = 3 WHERE id_ticket = :idticket";
+        $stmtTicket = $this->db->prepare($sqlTicket);
+        $stmtTicket->execute([':idticket' => $idTicket]);
+
+        $this->db->commit();
+        return true;
+    } catch (Exception $e) {
+        $this->db->rollBack();
+        throw $e;
+    }
+}
+
+public function evaluationExiste($idTicket) {
+    $sql = "SELECT 1 FROM Evaluation WHERE idticket = :idticket";
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute([':idticket' => $idTicket]);
+
+    return $stmt->fetchColumn() !== false;
+}
 
 
     }

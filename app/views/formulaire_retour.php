@@ -32,5 +32,6 @@
 
         <button type="submit">Envoyer</button>
     </form>
+    <a href="/Ticket">Creation de ticket</a>
 </body>
 </html>

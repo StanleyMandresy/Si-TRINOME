@@ -4,6 +4,9 @@ namespace app\controllers;
 
 use app\models\ClientModel; 
 use app\models\RetourModel; 
+use app\models\RequeteModel;
+use app\models\Ticket;
+
 use Flight;
 
 class ClientController {
@@ -51,5 +54,63 @@ class ClientController {
             Flight::json(['error' => 'Identifiants incorrects'], 401);
         }
     }
+
+     // 🔹 Liste des requêtes du client
+  public function mesRequetes() {
+    if (!isset($_SESSION['idClient'])) {
+        Flight::redirect('/home');
+        return;
+    }
+
+    $db = Flight::db();
+
+    $requeteModel = new RequeteModel($db);
+    $requetes = $requeteModel->getRequetesByClient($_SESSION['idClient']);
+
+    $ticketModel = new Ticket($db);
+    $tickets = $ticketModel->getTicketsByClient($_SESSION['idClient']);
+
+    Flight::render('Ticket/listerequete', [
+        'client' => $_SESSION['idClient'],
+        'requetes' => $requetes,
+        'tickets' => $tickets
+    ]);
+}
+
+
+    // 🔹 Formulaire "Faire une requête"
+    public function faireRequetePage() {
+        if (!isset($_SESSION['idClient'])) {
+            Flight::redirect('/home');
+            return;
+        }
+ $model = new RetourModel(Flight::db());
+          $produits = $model->getProduits();
+
+
+        Flight::render('Ticket/form_requete', ['produits' => $produits]);
+    }
+
+    // 🔹 Insertion d'une requête
+    public function insererRequete() {
+        if (!isset($_SESSION['idClient'])) {
+            Flight::redirect('/home');
+            return;
+        }
+
+        $idProduit = $_POST['idProduit'] ?? null;
+        $texte = trim($_POST['sujet'] ?? '');
+
+        if (empty($idProduit) || empty($texte)) {
+            Flight::render('Ticket/form_requete', ['error' => 'Veuillez remplir tous les champs']);
+            return;
+        }
+
+        $requeteModel = new RequeteModel(Flight::db());
+        $requeteModel->insertRequete($_SESSION['idClient'], $idProduit, $texte);
+
+        Flight::redirect('/Ticket');
+    }
+
     
 }

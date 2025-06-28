@@ -55,9 +55,9 @@ class ImportModel {
                             WHERE v.periode_id = ?";
                 
                 $stmt = $this->db->prepare($sqlTotal);
-$stmt->execute([$periode_id]);
-$totalVentes = $stmt->fetchColumn();
-    
+                $stmt->execute([$periode_id]);
+                $totalVentes = $stmt->fetchColumn();
+
                 // Insertion ou mise à jour
                 $sqlCheck = "SELECT COUNT(*) FROM budget 
                             WHERE idCategorie = ? 

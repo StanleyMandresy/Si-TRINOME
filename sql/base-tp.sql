@@ -1,5 +1,5 @@
-create database CRM;
-use CRM;
+--create database CRM;
+--use CRM;
 
 CREATE TABLE Nature (
   idNature INT PRIMARY KEY AUTO_INCREMENT,
@@ -55,7 +55,7 @@ VALUES
 (1, 'CRM', 2), 
 (2,'reparation moto',1),
 (2,'piece',2),
-(3,'vente',1);
+(3,'vente',1),
 (4,'Ticket',2);
 
 
@@ -145,12 +145,7 @@ CREATE TABLE CRM (
     
 );
 
--- CREATE TABLE Plainte (
---     idPlainte INT PRIMARY KEY AUTO_INCREMENT,
---     descriptionPlainte TEXT NOT NULL,
---     typePlainte ENUM('positif', 'negatif') NOT NULL,
---     categorie VARCHAR(50)
--- );
+
 
 CREATE TABLE Produit (
     idProduit INT PRIMARY KEY AUTO_INCREMENT,
@@ -191,21 +186,7 @@ CREATE TABLE CRMRETOUR(
 FOREIGN KEY (idRetour) REFERENCES RetourClient(idRetour),
 FOREIGN KEY (idCRM) REFERENCES CRM(idCRM)
 );
--- CREATE TABLE PlainteRetour (
---     idPlainteRetour INT PRIMARY KEY AUTO_INCREMENT,
---     idRetour INT NOT NULL,
---     idPlainte INT NOT NULL,
---     commentaire TEXT,
---     FOREIGN KEY (idRetour) REFERENCES RetourClient(idRetour),
---     FOREIGN KEY (idPlainte) REFERENCES Plainte(idPlainte),
---     UNIQUE KEY (idRetour, idPlainte)
--- );
 
--- CREATE TABLE produit (
---     idProduit INT PRIMARY KEY AUTO_INCREMENT,
---     Marque VARCHAR(255) NOT NULL,
---     prix_unitaire DECIMAL(15,2) NOT NULL
--- );
 
 CREATE TABLE vente (
     idProduit INT,
@@ -224,14 +205,14 @@ CREATE TABLE vente (
 -- Table des types de demande
 -- TABLE DES TYPES DE DEMANDE
 CREATE TABLE Type_demande (
-    id_type SERIAL PRIMARY KEY,
+    id_type INT PRIMARY KEY AUTO_INCREMENT ,
     nom_type VARCHAR(50) NOT NULL UNIQUE
 );
 
 -- INSERTIONS DES TYPES
 INSERT INTO Type_demande (nom_type) VALUES
-('Réparation'),
-('Réclamation'),
+('Reparation'),
+('Reclamation'),
 ('Assistance technique'),
 ('Demande information'),
 ('Maintenance');
@@ -239,17 +220,18 @@ INSERT INTO Type_demande (nom_type) VALUES
 
 -- TABLE DES REQUÊTES CLIENTS
 CREATE TABLE Requete_client (
-    id SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY AUTO_INCREMENT ,
     idclient INT NOT NULL,
     idproduit_concerne INT NOT NULL,
+    sujet TEXT,
     FOREIGN KEY (idclient) REFERENCES Client(idClient),
     FOREIGN KEY (idproduit_concerne) REFERENCES Produit(idProduit)
 );
-
+ALTER TABLE Requete_client ADD COLUMN classified BOOLEAN DEFAULT FALSE;
 
 -- TABLE DES TICKETS
 CREATE TABLE Ticket (
-    id_ticket SERIAL PRIMARY KEY,
+    id_ticket INT PRIMARY KEY AUTO_INCREMENT,
     id_client INT NOT NULL,
     idproduit_concerne INT NOT NULL,
     id_type_demande INT NOT NULL,
@@ -263,22 +245,22 @@ CREATE TABLE Ticket (
     FOREIGN KEY (id_client) REFERENCES Client(idClient),
     FOREIGN KEY (idproduit_concerne) REFERENCES Produit(idProduit),
     FOREIGN KEY (id_type_demande) REFERENCES Type_demande(id_type),
-    FOREIGN KEY (id_agent_assigne) REFERENCES User(id)
+    FOREIGN KEY (id_agent_assigne) REFERENCES User(idUser)
 );
-
+ALTER TABLE Ticket ADD COLUMN id_requete_client INT NOT NULL ;
 
 -- TABLE DES MESSAGES DE CHAT
 CREATE TABLE Chat (
-    id SERIAL PRIMARY KEY,
+    id  INT PRIMARY KEY AUTO_INCREMENT,
     idclient INT NOT NULL,
     id_agent_assigne INT NOT NULL,
     commentaire_client TEXT,
     commentaire_agent TEXT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (idclient) REFERENCES Client(idClient),
-    FOREIGN KEY (id_agent_assigne) REFERENCES user(id)
+    FOREIGN KEY (id_agent_assigne) REFERENCES User(idUser)
 );
-
+alter table Chat add column id_ticket INT NOT NULL;
 
 -- TABLE D'ÉVALUATION DES TICKETS
 CREATE TABLE Evaluation (
@@ -291,13 +273,13 @@ CREATE TABLE Evaluation (
 
 
 -- TABLE MOUVEMENT DU TICKET (HISTORIQUE)
+
 CREATE TABLE Mouvement_ticket (
-    id SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     idticket INT NOT NULL,
-    date_recu TIMESTAMP,
-    date_prise_en_charge TIMESTAMP,
-    date_traitement TIMESTAMP,
-    date_fermeture TIMESTAMP,
+    date_recu TIMESTAMP NULL DEFAULT NULL,
+    date_prise_en_charge TIMESTAMP NULL DEFAULT NULL,
+    date_traitement TIMESTAMP NULL DEFAULT NULL,
+    date_fermeture TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (idticket) REFERENCES ticket(id_ticket)
 );
-

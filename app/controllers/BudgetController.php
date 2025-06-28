@@ -6,6 +6,7 @@ use app\models\Budget;
 use app\models\Departement;
 use app\models\Categorie;
 use app\models\CRMmodel;
+use app\models\Ticket;
 
 use Flight;
 
@@ -160,30 +161,36 @@ class BudgetController{
             }
 
             }
-            public function validation(){
-                $db = Flight::db();
-                $budgetModel = new Budget($db);
-                $dept=new Departement(($db));
-        
-               
-                $crmModel = new CRMModel($db);
+    public function validation(){
+        $db = Flight::db();
+        $budgetModel = new Budget($db);
+        $dept=new Departement(($db));
 
-                if (isset($_POST['valide']) && $dept->isFinance($_SESSION['idDepartement'])==false) {
-                
-                        echo "Seul les membres du finance on accees";            
-                    }else{
-                        $budgets = $budgetModel->valider($_POST['valide']);
+    
+        $crmModel = new CRMModel($db);
+
+        if (isset($_POST['valide']) && $dept->isFinance($_SESSION['idDepartement'])==false) {
         
-                         header('Location: validation');
-                         exit;
-                       
-                    }
-                    if(isset(($_POST['crmValide']))){
-               $crmModel->validerCRMPeriod($_POST['crmValide']);
+                echo "Seul les membres du finance on accees";            
+            }else{
+                $budgets = $budgetModel->valider($_POST['valide']);
+                if(isset(($_POST['crmValide']))){
+            $crmModel->validerCRMPeriod($_POST['crmValide']);
 
                     }
-        
-                    }
+                             if(isset(($_POST['TicketValide']))){
+                $ticket = new Ticket(Flight::db());            
+    $ticket->validerTicketPeriode($_POST['TicketValide']);
+
+            }    
+                header('Location: validation');
+                exit;
+            
+            }
+    
+         
+
+            }
                 public function csv(){
                         $db = Flight::db();
                         $budgetModel = new Budget($db);

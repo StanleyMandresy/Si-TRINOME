@@ -10,7 +10,7 @@ INSERT INTO Client (nom, prenom, email, mdp)
 VALUES ('Rakoto', 'Jean', 'jean.rakoto@example.com', '123');
 
 INSERT INTO Client (nom, prenom, email, mdp)
-VALUES ('Rakoto', 'Jean', 'jean.rakoto@example.com', '1234');
+VALUES ('Stan', 'stan', 'stan.com', '1234');
 
 
 INSERT INTO Produit (nomProduit, description, prix, dateMiseEnMarche) VALUES

@@ -55,7 +55,7 @@
             </thead>
             <tbody>
                 <?php foreach ($budgets as $budget) : ?>
-                    <?php if (strtoupper($budget['nomCategorie']) != 'CRM') : ?>
+                    <?php if (strtoupper($budget['nomCategorie']) != 'CRM' && $budget['nomCategorie'] != 'Ticket') : ?>
                         <tr>
                             <td><?= htmlspecialchars($budget['nomDepartement']) ?></td>
                             <td><?= htmlspecialchars($budget['nomCategorie']) ?></td>
@@ -121,6 +121,49 @@
         </table>
     <?php else : ?>
         <p>Aucun CRM trouvé.</p>
+    <?php endif; ?>
+    
+    <h2>Validation des Ticket</h2>
+
+    <?php if (!empty($budgets)) : ?>
+        <table>
+            <thead>
+                <tr>
+                    <th>Département</th>
+                    <th>Catégorie</th>
+                    <th>Prévision</th>
+                    <th>Réalisation</th>
+                    <th>Écart</th>
+                    <th>Date</th>
+                    <th>Valider</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($budgets as $budget) : ?>
+                    <?php if (strtoupper($budget['nomCategorie'] == 'Ticket')) : ?>
+                        <tr>
+                            <td><?= htmlspecialchars($budget['nomDepartement']) ?></td>
+                            <td><?= htmlspecialchars($budget['nomCategorie']) ?></td>
+                            <td><?= number_format($budget['Prevision'], 2, ',', ' ') ?></td>
+                            <td><?= number_format($budget['Realisation'], 2, ',', ' ') ?></td>
+                            <td class="<?= ($budget['Ecart'] >= 0) ? 'positive' : 'negative' ?>">
+                                <?= number_format($budget['Ecart'], 2, ',', ' ') ?>
+                            </td>
+                            <td><?= date('d/m/Y H:i', strtotime($budget['DateBudget'])) ?></td>
+                            <td>
+                                <form action="validation" method="post">
+                                    <input type="hidden" name="valide" value="<?= $budget['idBudget'] ?>">
+                                    <input type="hidden" name="TicketValide" value="<?= $budget['periode_id'] ?>">
+                                    <button type="submit">Valider Ticket</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php else : ?>
+        <p>Aucun Ticket trouvé.</p>
     <?php endif; ?>
     <div class="card mb-4">
     <div class="card-header bg-primary text-white">
